@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Page</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 0px;
+        }
+
+        .navbar-brand,
+        .navbar-text {
+            color: #000000 !important;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        ul.list-group {
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background-color: #343a40;
+            border-color: #343a40;
+        }
+
+        .btn-primary:hover {
+            background-color: #23272b;
+            border-color: #23272b;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div class="container mt-5">
+
+		<div class="row">
+            <div class="col-lg-12">
+                <h2>Upload New Game Build</h2>
+                <form action="/admin/newbuild" method="post" enctype="multipart/form-data">
+					<div class="mb-3">
+						<input type="text" name="version" placeholder="Version">
+					</div>
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="build_file" name="windows.zip" accept=".zip" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload Build</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12 mt-4">
+                <h2>List of Matches</h2>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+								<th scope="col">Match ID</th>
+                                <th scope="col">Against player</th>
+                                <th scope="col">Expiration Date</th>
+                                <th scope="col">Streak</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+							{% for match in matches %}
+							<tr>
+								<td>{{ match["match_id"] }}</td>
+								<td>{{ match["name"] }}</td>
+								<td>{{ match["expiration_date"] }}</td>
+								<td>{{ match["streak"] }}</td>
+							</tr>
+							{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <h2>Current Tournament</h2>
+				<p>Tournament ID: {{ tournament.tournament_id }}</p>
+				<p>End Date: {{ tournament.end_date }}</p>
+            </div>
+            <div class="col-lg-6">
+                <h2>Current Versions</h2>
+                <p>Game Version: {{ version }}</p>
+                <p>Updater Version: {{ updater_version }}</p>
+            </div>
+        </div>
+
+        <div>
+            <a href="/admin/backup" class="btn btn-primary">Backup</a>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+
+</html>
