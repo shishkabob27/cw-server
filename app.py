@@ -23,8 +23,16 @@ parser.add_argument('--debug', action='store_true')
 
 args, _ = parser.parse_known_args()
 
+def GetOrCreateSecret():
+	os.makedirs("data/persist", exist_ok=True)
+	secret = "data/persist/secret.txt"
+	if not os.path.exists(secret):
+		with open(secret, "w") as f:
+			f.write(str(uuid.uuid4()))
+	return open(secret, "r").read()
+
 app = Flask(__name__)
-app.secret_key = open("flaskkey", "r").read()
+app.secret_key = GetOrCreateSecret()
 app.config['MAX_CONTENT_LENGTH'] = 4000000000 # 4GB
 
 bcrypt = Bcrypt(app)
@@ -868,37 +876,57 @@ def Log(category, message):
 		log = f"{time} - [{category.upper()}] - {message} \n"
 		f.write(log)
 		print(log)
-  
-#create files and directories
-os.makedirs("data/persist/tournament", exist_ok=True)
-#create active.json
-if not os.path.exists("data/persist/tournament/active.json"):
-	with open("data/persist/tournament/active.json", "w") as f:
-		#2 weeks from now
-		json.dump({"tournament_id": 1, "end_date": f"{datetime.fromtimestamp(time.time() + 60 * 60 * 24 * 14).strftime('%Y-%m-%dT%H:%M:%S')}"}, f)
-#create messages folder
-os.makedirs("data/persist/messages", exist_ok=True)
-#create logs folder
-os.makedirs("data/persist/logs", exist_ok=True)
-#create version.txt
-if not os.path.exists("data/persist/version.txt"):
-	with open("data/persist/version.txt", "w") as f:
-		f.write("1.0.0")
-#create updater_version.txt
-if not os.path.exists("data/persist/updater_version.txt"):
-	with open("data/persist/updater_version.txt", "w") as f:
-		f.write("1.0.0")
 
-if __name__ == '__main__':
+#Create default admin if it doesn't exist and returns the password
+#If it does exist, returns None
+def CreateDefaultAdmin() -> str:
+	db_user = Admin.query.filter_by(username="admin").first()
+	if db_user is None:
+		password = uuid.uuid4().hex
+		db_user = Admin(username="admin", password=EncryptPassword(password))
+		db.session.add(db_user)
+		db.session.commit()
+		return password
+	return None
+
+def AppSetup():
 	with app.app_context():
+
+		#create some needed folders
+		os.makedirs("data/persist/tournament", exist_ok=True)
+		os.makedirs("data/persist/logs", exist_ok=True)
+		os.makedirs("data/persist/messages", exist_ok=True)
+
+		#create default game files
+		if not os.path.exists("data/persist/version.txt"):
+			with open("data/persist/version.txt", "w") as f:
+				f.write("1.0.0")
+
+		if not os.path.exists("data/persist/updater_version.txt"):
+			with open("data/persist/updater_version.txt", "w") as f:
+				f.write("1.0.0")
+
+		if not os.path.exists("data/persist/tournament/active.json"):
+			with open("data/persist/tournament/active.json", "w") as f:
+				#get current date and add 14 days
+				end_date = datetime.now() + timedelta(days=14)
+				json.dump({"tournament_id": 0, "end_date": end_date.strftime("%Y-%m-%dT%H:%M:%S")}, f)
+
+
+		#Create database
 		db.create_all()
 		update_thread = threading.Thread(target=scheduled_task)
 		update_thread.start()
+
+		#Create and show admin login if it doesn't exist
+		admin_password = CreateDefaultAdmin()
+		if admin_password is not None:
+			print(f"Created 'admin' user with password: {admin_password}")
+
+if __name__ == '__main__':
+	AppSetup()
 	app.run(debug=args.debug, port=args.port)
 else:
 	Log("server", "Starting server...")
-	with app.app_context():
-		db.create_all()
-		update_thread = threading.Thread(target=scheduled_task)
-		update_thread.start()
+	AppSetup()
  
