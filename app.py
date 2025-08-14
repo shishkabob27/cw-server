@@ -54,11 +54,6 @@ def PersistVersion():
 	with open("data/persist/version.txt", "r") as f:
 		return f.read()
 
-@app.route("/persist/updater_version.txt")
-def PersistUpdaterVersion():
-	with open("data/persist/updater_version.txt", "r") as f:
-		return f.read()
-
 class Admin(UserMixin, db.Model):
 	username: Mapped[str] = mapped_column(db.String(80), primary_key=True, unique=True, nullable=False)
 	password: Mapped[str] = mapped_column(db.String(80), nullable=False)
@@ -74,7 +69,7 @@ def load_user(user_id):
 def AdminPage():
 	if request.method == 'GET':
 		if current_user.is_authenticated:
-			return render_template('admin.html', matches=Matches, version=PersistVersion(), updater_version=PersistUpdaterVersion(), tournament=GetTorunamentData())
+			return render_template('admin.html', matches=Matches, version=PersistVersion(), tournament=GetTorunamentData())
 		else:
 			return render_template('login.html')
 	if request.method == 'POST':
@@ -826,10 +821,6 @@ def AppSetup():
 		#create default game files
 		if not os.path.exists("data/persist/version.txt"):
 			with open("data/persist/version.txt", "w") as f:
-				f.write("1.0.0")
-
-		if not os.path.exists("data/persist/updater_version.txt"):
-			with open("data/persist/updater_version.txt", "w") as f:
 				f.write("1.0.0")
 
 		if not os.path.exists("data/persist/tournament/active.json"):
